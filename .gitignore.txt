@@ -1,3 +1,0 @@
-game.layout
-game.depend
-git.attributes
