@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1677440625 source:c:\users\giova\onedrive\documentos\codeblocks_c\camera2d\main.c
+	<stdio.h>
+	<stdlib.h>
+	"raylib.h"
+	<time.h>
+	<math.h>
+
