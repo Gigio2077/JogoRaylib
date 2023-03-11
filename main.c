@@ -110,7 +110,7 @@ int main()
 //--------------------------------------------------------------------------------------
 //carrega mapa
         FILE *fp;
-        fp = fopen("mapa1.txt" , "r");
+        fp = fopen("mapas/mapa1.txt" , "r");
         if(fp == NULL) {
           perror("Error opening file");
           return(-1);
@@ -209,10 +209,10 @@ index = 0;
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
 
-    Texture2D BG3 = LoadTexture("BG3.png");        // Texture loading
-    Texture2D BG1 = LoadTexture("BG1.png");
-    Texture2D grama = LoadTexture("grama.png");
-    Texture2D terra = LoadTexture("terra.png");
+    Texture2D BG3 = LoadTexture("texturas/BG3.png");        // Texture loading
+    Texture2D BG1 = LoadTexture("texturas/BG1.png");
+    Texture2D grama = LoadTexture("texturas/grama.png");
+    Texture2D terra = LoadTexture("texturas/terra.png");
 
 
 //----------------------------------------------------------------------------------
