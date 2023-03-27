@@ -137,7 +137,7 @@ int main()
 //--------------------------------------------------------------------------------------
 //carrega mapa
         FILE *fp;
-        fp = fopen("mapas/mapa1.txt" , "r");
+        fp = fopen("mapas/mapa6.txt" , "r");
         if(fp == NULL) {
           perror("Error opening file");
           return(-1);
