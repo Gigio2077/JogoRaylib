@@ -2,29 +2,29 @@
 #C    B                  # B          C#CC    B            #
 #C J  B                 B# B          ##CC    B            #
 ########               BB###           ####BBBB         Z  #
-#                        T             #C#        ##########
+#          CCCCC         T             #C#        ##########
 #         ########       T          B  #BB                 #
 #      B       BC#       T          B  #BB                 #
 #      B       BB#       T          #### ######            #
 #      B         #       T             # #   B             #
-#      B         #       T             # #   B       Z     #
+#    CCBCC       #       T             # #   B       Z     #
 #    #####       #       T             #P#   B   ###########
 #                B       T             ###                C#
 #                B       T             #C####             ##
-#                B       T             #                   #
-######    B      B       T       Z     #          B        #
+# CCC            B       T             #                   #
+######    B      B CCCC  T       Z     #          B        #
 #         B      ########T      ####   #         BBC       #
 #         B              B      B      #B         ######   #
-#                        B      B      # B             #   #
-#   #######              B      B      #  B            #XXX#
-#          #             #######B      #   B           #####
-#          #####         #C            #    B              #
-#                   #######      #XXXXX#     #####         #
+#     CCCC               B      B      # B             #   #
+#   #######              BJ     B      #  B            #XXX#
+#          # CCC         #######B      #   B           #####
+#          #####          CCC          #    B CCC          #
+#                   ##########   #XXXXX#     #####         #
 #          XX            #       B     #       B           #
 #          BB            #       B     #       B           #
 #          BB    ####    #       B     #       Z           #
 #          BB            #XXXXXX##     #     #####         #
 #B         BB            #             #                   #
 #BB        BB            #             #                   #
-#BBB       B#XXXXXXXXXXXX#      Z     BBB  Z   #XXXXXXXXXXX#
+#BBB       B#XXXXXXXXXXXX# CCCC Z     BBB  Z   #XXXXXXXXXXX#
 ############################################################
