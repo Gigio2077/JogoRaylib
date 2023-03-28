@@ -20,18 +20,79 @@
 
 typedef struct entidade //podendo ser jogador ou inimigos
     {
-        int delta,Repouso,Pulou,ColisaoEsq,ColisaoDir,ColisaoSup,spawnX,spawnY;
+        int frame,currentframe,Repouso,Pulou,ColisaoEsq,ColisaoDir,ColisaoSup,spawnX,spawnY;
         Rectangle retangulo;
         Texture2D texturaatual;
+        Rectangle framerec;
         float g;
         char Estado[10];
+        /*
 
+        J - Jump
+        R - run right
+        r - idle right
+        L - run left
+        l - idle left
+        a - attack1
+        A - Attack2
+        f - fall
+        m - mortal
+        s - estático
+
+        */
     }ENTIDADE;
+
+
+
+    typedef struct blocos
+    {
+    Rectangle retangulo;
+    Texture2D textura;
+
+    }BLOCOS;
+
+
+     typedef struct mapalido
+    {
+    ENTIDADE player;
+    BLOCOS blocos;
+    Rectangle retangulo;
+    Texture2D textura;
+
+    }MAPA;
+
+
+//void leMapa (char nomemapa[],)
+void init_nome_mapas(char nome_mapas[][12]) {
+    int i;
+
+    for (i = 0; i < 7; i++) {
+        sprintf(nome_mapas[i], "mapa%d.txt", i + 1);
+    }
+}
+
+void spritesPlayer(ENTIDADE *player)
+{
+    player->frame++;
+
+        if (player->frame >= (8))
+        {
+            player->frame = 0;
+            player->currentframe++;
+
+            if (player->currentframe > 4) player->currentframe = 0;
+
+            player->framerec.x = (float)player->currentframe*SPRITESIZE;
+        }
+}
 
 void respawna(ENTIDADE *player)
     {
-        (*player).retangulo.x=player->spawnX;
-        (*player).retangulo.y=player->spawnY;
+        player->g=0;
+        player->Repouso=0;
+
+        player->retangulo.x = player->spawnX;
+        player->retangulo.y = player->spawnY;
     }
 int haveraColisao (Rectangle player, Rectangle parede, int delta, int direcao){
     switch(direcao)
@@ -71,8 +132,9 @@ void movimento(ENTIDADE *player) {
 
     if ((IsKeyDown(KEY_LEFT)) && !(player->ColisaoEsq))
         {
-            (player->retangulo.x) -= (double)SPEED;
-            printf("%f \n\n",(player->retangulo.x));
+            player->retangulo.x -= SPEED;
+            player->Repouso=0;
+
         }
 
     if ((IsKeyDown(KEY_UP)) && !(player->ColisaoSup) && player->Repouso)
@@ -84,6 +146,9 @@ void movimento(ENTIDADE *player) {
     if ((IsKeyDown(KEY_RIGHT)) && !(player->ColisaoDir))
         {
             player->retangulo.x += SPEED;
+            player->Repouso=0;
+
+
         }
 }
 
@@ -91,20 +156,27 @@ void gravidade(ENTIDADE *player) {
 
     if (player->Repouso)
         {
+            player->g=0;
             return;
         }
     //pulo
     if (!(player->Repouso) && player->Pulou)
         {
+            player->ColisaoDir=1;
+            player->ColisaoEsq=1;
             player->g += GRAVIDADE;
-            player->retangulo.y -= SPEED * 2;
-            player->retangulo.y += player->g;
+            if(player->g >0.8){
+                player->retangulo.y -= SPEED * 2;
+                player->retangulo.y += player->g;
+            }
         }
     //queda-livre: bateu no teto ou caiu
     if (!(player->Repouso) && !player->Pulou)
         {
             player->g += GRAVIDADE;
-            player->retangulo.y += player->g;
+            if(player->g >0.8){
+                player->retangulo.y += player->g;
+            }
         }
 
 }
@@ -112,10 +184,12 @@ void gravidade(ENTIDADE *player) {
 
 int main()
 {
+    char nome_mapas[7][12];
+    init_nome_mapas(nome_mapas);
 
     int i = 0;
     int index;
-    int ajuste;
+    float ajuste;
     SetRandomSeed(time(NULL));
     int qtdBlocosGrama = 0;
     int qtdCoins = 0;
@@ -124,11 +198,9 @@ int main()
     char mapa[30][61];
 
 
-
     float update = 0;
 
     ENTIDADE player;
-
 
 
 
@@ -137,7 +209,7 @@ int main()
 //--------------------------------------------------------------------------------------
 //carrega mapa
         FILE *fp;
-        fp = fopen("mapas/mapa6.txt" , "r");
+        fp = fopen("mapas/mapa1.txt" , "r");
         if(fp == NULL) {
           perror("Error opening file");
           return(-1);
@@ -149,6 +221,9 @@ int main()
             }
         }
         fclose(fp);
+
+
+
     char currentchar;
     char hashatag = '#';
     char T = 'T';
@@ -166,6 +241,7 @@ for( int i=0; i<30; i++){
 
                 player.spawnX = TILE*j;
                 player.spawnY = TILE*i;
+                player.Repouso = 1;
 
                 break;
             case '#':
@@ -238,7 +314,10 @@ index = 0;
 index = 0;
 
     printf("\n\n\nspawnx:%f spawny:%f",(double)player.spawnX,player.spawnY);
-    Rectangle player_rect = {(double)player.spawnX, (double)player.spawnY, SPRITESIZE, SPRITESIZE};
+
+    Rectangle player_rect = {((double)player.spawnX), ((int)player.spawnY), SPRITESIZE, SPRITESIZE};
+    Rectangle player_frame_rect = {0, 0, SPRITESIZE, SPRITESIZE};
+    player.framerec = player_frame_rect;
     player.retangulo = player_rect;
 
 
@@ -260,8 +339,11 @@ index = 0;
     Texture2D frame = LoadTexture("texturas/frame.png");
     Texture2D trap = LoadTexture("texturas/trap.png");
     Texture2D coin_texture = LoadTexture("texturas/coin.png");
+    Texture2D spriterunright = LoadTexture("texturas/spriterunright.png");
+    Texture2D spriterunleft = LoadTexture("texturas/spriterunleft.png");
 
 
+    printf("\nTexturas carregadas com sucesso.\n");
 
 //----------------------------------------------------------------------------------
     SetTargetFPS(60);
@@ -269,23 +351,18 @@ index = 0;
 
 // LOOP PRINCIPAL DO JOGO
 
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())
     {
-        // Update
-        //----------------------------------------------------------------------------------
+
         // TODO: Atualiza as variáveis aqui
             player.ColisaoDir = 0;
             player.ColisaoEsq = 0;
             player.ColisaoSup = 0;
+            //player.Repouso=0;
 
 
-
-        //----------------------------------------------------------------------------------
-
-// DESENHO
 //----------------------------------------------------------------------------------
         BeginDrawing();
-
 
             ClearBackground(RAYWHITE);
 
@@ -293,16 +370,26 @@ index = 0;
             DrawTexture(BG1, 0, 0, WHITE);
             DrawTexture(BG3, 0, 0, WHITE);
         //----------------------------------------------------------------------------------
-            DrawRectangle((int)player.retangulo.x, (int)player.retangulo.y, player.retangulo.width, player.retangulo.height, RED);
-            DrawRectangleRec( (player.retangulo), RED);
+            //DrawRectangle((float)player.retangulo.x, (float)player.retangulo.y, player.retangulo.width, player.retangulo.height, RED);
 
-
-            //printf("posx:%d,posy:%d\n ",(int)player.retangulo.x,(int)player.retangulo.y);
-
+            //printf("Repouso:%d Pulou:%d g:%f  \n",player.Repouso,player.Pulou,player.g);
             DrawTexture(frame,0,480,WHITE);
 
+
+
+            Vector2 position = {player.retangulo.x,player.retangulo.y};
+            DrawTextureRec(spriterunleft, player.framerec, position, WHITE);
+
+
+
+
+
             //------------------------------------------------------------------------------
+
             // sera substituido por uma funçao que desenha todos blocos sem animacao .
+            /* essa funcao recebera a struct mapaLido,  que contém
+            um vetor de blocos, e a struct ENTIDADE*/
+
             for(int k = 0; k<qtdBlocosGrama; k++){
                 DrawTexture(grama_textura,
                             BlocoGrama[k].x,
@@ -351,51 +438,37 @@ index = 0;
     for (i = 0; i<qtdBlocosGrama; i++)
 {
                 player.ColisaoDir += haveraColisao(player.retangulo,BlocoGrama[i],SPEED,3);
-
                 player.ColisaoEsq += haveraColisao(player.retangulo,BlocoGrama[i],SPEED,1);
-
-                player.ColisaoSup+= haveraColisao(player.retangulo,BlocoGrama[i],abs(SPEED*2-(player.g+GRAVIDADE)),2);
-
+                player.ColisaoSup+= haveraColisao(player.retangulo,BlocoGrama[i],SPEED*2-(player.g+GRAVIDADE),2);
                 player.Repouso+= haveraColisao(player.retangulo,BlocoGrama[i],player.g+GRAVIDADE,4);
-
-    //colisão com o teto
+        //colisão com o teto
          if(haveraColisao(player.retangulo,BlocoGrama[i],abs(SPEED*2-(player.g+GRAVIDADE)),2))
             {
+                if(player.g>4){player.g=0;}
                 player.Pulou = 0;
-
-
+                break;
             }
-    //colisão com o solo
+        //colisão com o solo
         if(haveraColisao(player.retangulo,BlocoGrama[i],player.g+GRAVIDADE,4))
             {
                 ajuste = BlocoGrama[i].y - (player.retangulo.y+player.retangulo.height) ;
-                printf("R: %d\n",player.Repouso );
 
                 player.retangulo.y+=ajuste;
-
+                printf("%f",ajuste);
                 ajuste = 0;
-
-;
                 player.Pulou = 0;
-
                 player.g=0;
-
                 break;
             }
-
 }
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-
+spritesPlayer(&player);
 movimento(&player);
 gravidade(&player);
 
+if(IsKeyDown(KEY_R) ||((player.retangulo.x>960||player.retangulo.x<0)||(player.retangulo.y>480||player.retangulo.y<0)) )
+    {respawna(&player);}
 
-
-
-player.Repouso=0;
-
-if((player.retangulo.x>960||player.retangulo.x<0)||(player.retangulo.y>480||player.retangulo.y<0)) {respawna(&player);}
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
