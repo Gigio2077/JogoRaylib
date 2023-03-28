@@ -18,8 +18,8 @@
 
 
 
-typedef struct entidade //podendo ser jogador ou inimigos
-    {
+typedef struct entidade{
+
         int frame,currentframe,Repouso,Pulou,ColisaoEsq,ColisaoDir,ColisaoSup,spawnX,spawnY;
         Rectangle retangulo;
         Texture2D texturaatual;
@@ -42,18 +42,16 @@ typedef struct entidade //podendo ser jogador ou inimigos
         */
     }ENTIDADE;
 
+typedef struct bloco_tipo{
 
-
-    typedef struct blocos
-    {
     Rectangle retangulo;
     Texture2D textura;
 
     }BLOCOS;
 
-
-     typedef struct mapalido
-    {
+typedef struct mapalido{
+    char matriz[30][61];
+    int qtdBlocosGrama,qtdCoins,qtdBlocosTerra,qtdArmadilhas;
     ENTIDADE player;
     BLOCOS blocos;
     Rectangle retangulo;
@@ -62,18 +60,94 @@ typedef struct entidade //podendo ser jogador ou inimigos
     }MAPA;
 
 
-//void leMapa (char nomemapa[],)
-void init_nome_mapas(char nome_mapas[][12]) {
+void leMapa(char nomemapa[], MAPA *mapalido){
+
+    FILE *fp;
+    fp = fopen(nomemapa, "r");
+    if(fp == NULL) {
+        printf("Error opening file: no such file %s",nomemapa);
+        exit(1);
+    }
+    else {
+        int qtdBlocosGrama = 0;
+        int qtdCoins = 0;
+        int qtdBlocosTerra = 0;
+        int qtdArmadilhas = 0;
+
+        ENTIDADE player;
+        BLOCOS blocos;
+
+        for(int i = 0; i<30; i++) {
+            fgets(mapalido->matriz[i], 99, fp);
+        }
+
+        fclose(fp);
+
+        char currentchar;
+        char hashatag = '#';
+        char T = 'T';
+        char X = 'X';
+        char J = 'J';
+        char C = 'C';
+
+        for(int i=0; i<30; i++) {
+            for(int j=0; j<61; j++) {
+                currentchar = mapalido->matriz[i][j];
+
+                switch(currentchar) {
+                    case 'J':
+                        player.spawnX = TILE*j;
+                        player.spawnY = TILE*i;
+                        player.Repouso = 1;
+                        break;
+                    case '#':
+                        qtdBlocosGrama++;
+                        break;
+                    case 'C':
+                        qtdCoins++;
+                        break;
+                    case 'X':
+                        qtdArmadilhas++;
+                        break;
+                    case 'T':
+                        qtdBlocosTerra++;
+                        break;
+                    default:
+                        // caso não seja nenhum dos caracteres desejados, não faz nada
+                        break;
+                }
+            }
+        }
+
+        mapalido->qtdBlocosGrama = qtdBlocosGrama;
+        mapalido->qtdCoins = qtdCoins;
+        mapalido->qtdBlocosTerra = qtdBlocosTerra;
+        mapalido->qtdArmadilhas = qtdArmadilhas;
+        mapalido->player = player;
+        mapalido->blocos = blocos;
+    }
+}
+
+void init_nome_mapas(char nome_mapas[][18]) {
+    char aux[18] = "mapas/";
     int i;
 
     for (i = 0; i < 7; i++) {
         sprintf(nome_mapas[i], "mapa%d.txt", i + 1);
-    }
+        strcat(aux, nome_mapas[i]);
+        strcpy(nome_mapas[i], aux);
+        strcpy(aux, "mapas/");
+        }
+
+    for (i = 0; i < 7; i++) {
+        printf("O valor de [%d] is: %s\n", i, nome_mapas[i]);
+        }
+
 }
 
-void spritesPlayer(ENTIDADE *player)
-{
-    player->frame++;
+void spritesPlayer(ENTIDADE *player){
+
+        player->frame++;
 
         if (player->frame >= (8))
         {
@@ -86,14 +160,14 @@ void spritesPlayer(ENTIDADE *player)
         }
 }
 
-void respawna(ENTIDADE *player)
-    {
+void respawna(ENTIDADE *player){
+
         player->g=0;
         player->Repouso=0;
-
         player->retangulo.x = player->spawnX;
         player->retangulo.y = player->spawnY;
     }
+
 int haveraColisao (Rectangle player, Rectangle parede, int delta, int direcao){
     switch(direcao)
         {
@@ -182,9 +256,9 @@ void gravidade(ENTIDADE *player) {
 }
 
 
-int main()
-{
-    char nome_mapas[7][12];
+    int main()
+    {
+    char nome_mapas[7][18];
     init_nome_mapas(nome_mapas);
 
     int i = 0;
@@ -203,6 +277,10 @@ int main()
     ENTIDADE player;
 
 
+    MAPA mapas[7];
+    for (int i = 0; i < 7; i++) {
+        leMapa(nome_mapas[i], &mapas[i]);
+    }
 
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
@@ -262,6 +340,9 @@ for( int i=0; i<30; i++){
         }
     }
 }
+
+BLOCOS bloco_de_terra[mapas[7].qtdBlocosTerra];
+
 Rectangle BlocoTerra[qtdBlocosTerra];
 Rectangle BlocoGrama[qtdBlocosGrama];
 Rectangle Armadilhas[qtdArmadilhas];
