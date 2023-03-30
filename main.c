@@ -5,7 +5,7 @@
 #include <math.h>
 
 #define SPRITESIZE 16
-#define ALTURA 480
+#define ALTURA 530
 #define LARGURA 960
 #define TILE 16
 #define SPEED 4
@@ -16,7 +16,24 @@
 // Program main entry point
 //------------------------------------------------------------------------------------
 
+typedef struct texturas{
 
+    Texture2D BG3;       // Carregando Texturas
+    Texture2D BG1;
+    Texture2D grama_textura ;
+    Texture2D terra ;
+    Texture2D frame;
+    Texture2D trap ;
+    Texture2D coin_texture;
+    Texture2D spriterunright ;
+    Texture2D spriterunleft;
+    Texture2D coin_grande;
+    Texture2D heart;
+
+
+
+
+}TEXTURAS;
 
 typedef struct entidade{
 
@@ -52,15 +69,26 @@ typedef struct bloco_tipo{
 typedef struct mapalido{
     char matriz[30][61];
     int qtdBlocosGrama,qtdCoins,qtdBlocosTerra,qtdArmadilhas;
-    ENTIDADE player;
-    BLOCOS blocos;
-    Rectangle retangulo;
-    Texture2D textura;
+    Rectangle BlocoTerra[200];
+    Rectangle BlocoGrama[700];
+    Rectangle Armadilhas[50];
+    Rectangle Coins[70];
 
+    int posinimigos[15][1][1];
     }MAPA;
 
+void hud (MAPA *mapalido,ENTIDADE *player,TEXTURAS texturas){
+//rawRectangle(int posX, int posY, int width, int height, Color color);
+DrawRectangle(0,480,960,50,DARKGRAY);
+DrawText((TextFormat("x %d", mapalido->qtdCoins)), 80, 490, 35, RED);
+DrawTexture(texturas.coin_grande,0,473,WHITE);
+DrawText((TextFormat("x %d", mapalido->qtdCoins)), 250, 490, 35, RED);
+DrawTexture(texturas.heart,170,473,WHITE);
 
-void leMapa(char nomemapa[], MAPA *mapalido){
+
+}
+
+void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
 
     FILE *fp;
     fp = fopen(nomemapa, "r");
@@ -74,12 +102,13 @@ void leMapa(char nomemapa[], MAPA *mapalido){
         int qtdBlocosTerra = 0;
         int qtdArmadilhas = 0;
 
-        ENTIDADE player;
-        BLOCOS blocos;
 
         for(int i = 0; i<30; i++) {
-            fgets(mapalido->matriz[i], 99, fp);
+            fgets(mapalido->matriz[i], 70, fp);
+            printf("%s", mapalido->matriz[i]);
+
         }
+
 
         fclose(fp);
 
@@ -96,9 +125,13 @@ void leMapa(char nomemapa[], MAPA *mapalido){
 
                 switch(currentchar) {
                     case 'J':
-                        player.spawnX = TILE*j;
-                        player.spawnY = TILE*i;
-                        player.Repouso = 1;
+                        player->spawnX = TILE*j;
+                        player->spawnY = TILE*i;
+                        player->Repouso = 1;
+                        player->ColisaoDir = 0;
+                        player->ColisaoEsq = 0;
+                        player->ColisaoSup = 0;
+                        player->Pulou = 0;
                         break;
                     case '#':
                         qtdBlocosGrama++;
@@ -118,13 +151,58 @@ void leMapa(char nomemapa[], MAPA *mapalido){
                 }
             }
         }
-
+        printf("Coins %d",qtdCoins);
         mapalido->qtdBlocosGrama = qtdBlocosGrama;
         mapalido->qtdCoins = qtdCoins;
         mapalido->qtdBlocosTerra = qtdBlocosTerra;
         mapalido->qtdArmadilhas = qtdArmadilhas;
-        mapalido->player = player;
-        mapalido->blocos = blocos;
+
+        int index = 0;
+            for( int i=0; i<30; i++){
+                for( int j=0; j<61; j++){
+                    currentchar = mapalido->matriz[i][j];
+                    if( currentchar==T ){
+                mapalido->BlocoTerra[index].width = TILE ;
+                mapalido->BlocoTerra[index].height = TILE ;
+                mapalido->BlocoTerra[index].x = TILE*j ;
+                mapalido->BlocoTerra[index].y = TILE*i ;
+                index++;
+            }}}
+        index = 0;
+            for( int i=0; i<30; i++){
+                for( int j=0; j<61; j++){
+                    currentchar = mapalido->matriz[i][j];
+                    if( currentchar==hashatag ){
+                mapalido->BlocoGrama[index].width = TILE ;
+                mapalido->BlocoGrama[index].height = TILE ;
+                mapalido->BlocoGrama[index].x = TILE*j ;
+                mapalido->BlocoGrama[index].y = TILE*i ;
+                index++;
+            }}}
+        index = 0;
+            for( int i=0; i<30; i++){
+                for( int j=0; j<61; j++){
+                    currentchar = mapalido->matriz[i][j];
+                    if( currentchar==X ){
+                mapalido->Armadilhas[index].width = TILE+1 ;
+                mapalido->Armadilhas[index].height = TILE+1 ; //esses +1 e menos 1 é pra ajustar a colisao com o espinho
+                mapalido->Armadilhas[index].x = (TILE*j)-1 ;
+                mapalido->Armadilhas[index].y = (TILE*i)-1 ;
+                index++;
+            }}}
+        index = 0;
+            for( int i=0; i<30; i++){
+                for( int j=0; j<61; j++){
+                    currentchar = mapalido->matriz[i][j];
+                    if( currentchar==C ){
+                mapalido->Coins[index].width = TILE ;
+                mapalido->Coins[index].height = TILE ;
+                mapalido->Coins[index].x = (TILE*j) ;
+                mapalido->Coins[index].y = (TILE*i) ;
+                index++;
+            }}}
+        index = 0;
+
     }
 }
 
@@ -140,13 +218,60 @@ void init_nome_mapas(char nome_mapas[][18]) {
         }
 
     for (i = 0; i < 7; i++) {
-        printf("O valor de [%d] is: %s\n", i, nome_mapas[i]);
+        printf("O valor de mapa[%d] is: %s\n", i, nome_mapas[i]);
         }
 
 }
 
-void spritesPlayer(ENTIDADE *player){
+void renderiza_mapa(MAPA *mapalido,ENTIDADE *player,TEXTURAS texturas){
 
+                DrawTexture(texturas.BG1, 0, 0, WHITE);
+                for(int k = 0; k<(mapalido->qtdBlocosGrama); k++){
+                                DrawTexture(texturas.grama_textura,
+                                            mapalido->BlocoGrama[k].x,
+                                            mapalido->BlocoGrama[k].y,
+                                            WHITE);
+                                }
+
+                for(int k = 0; k<(mapalido->qtdBlocosTerra); k++){
+                                DrawTexture(texturas.terra,
+                                            mapalido->BlocoTerra[k].x,
+                                            mapalido->BlocoTerra[k].y,
+                                            WHITE);
+                                            }
+                for(int k = 0; k<(mapalido->qtdCoins); k++){
+                                DrawTexture(texturas.coin_texture,
+                                            mapalido->Coins[k].x,
+                                            mapalido->Coins[k].y,
+                                            WHITE);
+                                if(CheckCollisionRecs(mapalido->Coins[k], player->retangulo))
+                                        {
+                                            mapalido->Coins[k].x = -100;
+                                            mapalido->qtdCoins--;
+                                            printf("\nmoedas restantes:%d",mapalido->qtdCoins);
+                                        }
+                                            }
+                for(int k = 0; k<mapalido->qtdArmadilhas; k++){
+                                DrawTexture(texturas.trap,
+                                            mapalido->Armadilhas[k].x,
+                                            mapalido->Armadilhas[k].y,
+                                            WHITE);
+                                if(CheckCollisionRecs(mapalido->Armadilhas[k], player->retangulo))
+                                {
+                                    player->g=0;
+                                    player->Repouso=1;
+                                    respawna(player);
+                                }
+                            }
+
+            Vector2 position = {player->retangulo.x,player->retangulo.y};
+            DrawTextureRec(texturas.spriterunleft, player->framerec, position, WHITE);
+
+
+}
+
+void atualizaPlayer(ENTIDADE *player){
+//atualiza sprites e estados para default
         player->frame++;
 
         if (player->frame >= (8))
@@ -158,10 +283,14 @@ void spritesPlayer(ENTIDADE *player){
 
             player->framerec.x = (float)player->currentframe*SPRITESIZE;
         }
+        player->ColisaoDir = 0;
+        player->ColisaoEsq = 0;
+        player->ColisaoSup = 0;
+        player->Repouso = 0;
 }
 
 void respawna(ENTIDADE *player){
-
+        printf("respawn\n");
         player->g=0;
         player->Repouso=0;
         player->retangulo.x = player->spawnX;
@@ -236,10 +365,8 @@ void gravidade(ENTIDADE *player) {
     //pulo
     if (!(player->Repouso) && player->Pulou)
         {
-            player->ColisaoDir=1;
-            player->ColisaoEsq=1;
             player->g += GRAVIDADE;
-            if(player->g >0.8){
+            if(player->g >0.7){
                 player->retangulo.y -= SPEED * 2;
                 player->retangulo.y += player->g;
             }
@@ -255,152 +382,56 @@ void gravidade(ENTIDADE *player) {
 
 }
 
+void checacolisoes(MAPA *mapalido,ENTIDADE *player)
+{
 
-    int main()
+    float ajuste = 0;
+         for (int i = 0; i<mapalido->qtdBlocosGrama; i++)
     {
-    char nome_mapas[7][18];
-    init_nome_mapas(nome_mapas);
-
-    int i = 0;
-    int index;
-    float ajuste;
-    SetRandomSeed(time(NULL));
-    int qtdBlocosGrama = 0;
-    int qtdCoins = 0;
-    int qtdBlocosTerra = 0;
-    int qtdArmadilhas = 0;
-    char mapa[30][61];
-
-
-    float update = 0;
-
-    ENTIDADE player;
-
-
-    MAPA mapas[7];
-    for (int i = 0; i < 7; i++) {
-        leMapa(nome_mapas[i], &mapas[i]);
-    }
-
-//--------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------
-//carrega mapa
-        FILE *fp;
-        fp = fopen("mapas/mapa1.txt" , "r");
-        if(fp == NULL) {
-          perror("Error opening file");
-          return(-1);
-       }
-       else {
-        for(int i = 0; i<30; i++)
-            {
-            fgets(mapa[i], 99 ,fp);
-            }
-        }
-        fclose(fp);
-
-
-
-    char currentchar;
-    char hashatag = '#';
-    char T = 'T';
-    char X = 'X';
-    char J = 'J';
-    char C = 'C';
-
-for( int i=0; i<30; i++){
-    for( int j=0; j<61; j++){
-        currentchar = mapa[i][j];
-
-        switch (currentchar) {
-            case 'J':
-
-
-                player.spawnX = TILE*j;
-                player.spawnY = TILE*i;
-                player.Repouso = 1;
-
-                break;
-            case '#':
-                qtdBlocosGrama++;
-                break;
-            case 'C':
-                qtdCoins++;
-                break;
-            case 'X':
-                qtdArmadilhas++;
-                break;
-            case 'T':
-                qtdBlocosTerra++;
-                break;
-            default:
-                // caso não seja nenhum dos caracteres desejados, não faz nada
-                break;
-        }
+                    player->ColisaoDir += haveraColisao(player->retangulo,mapalido->BlocoGrama[i],SPEED,3);
+                    player->ColisaoEsq += haveraColisao(player->retangulo,mapalido->BlocoGrama[i],SPEED,1);
+                    player->ColisaoSup+= haveraColisao(player->retangulo,mapalido->BlocoGrama[i],SPEED*2-(player->g+GRAVIDADE),2);
+                    player->Repouso+= haveraColisao(player->retangulo,mapalido->BlocoGrama[i],player->g+GRAVIDADE,4);
+            //colisão com o teto
+             if(haveraColisao(player->retangulo,mapalido->BlocoGrama[i],abs(SPEED*2-(player->g+GRAVIDADE)),2))
+                {
+                    if(player->g>4){player->g=0;}
+                    player->Pulou = 0;
+                    break;
+                }
+            //colisão com o solo
+            if(haveraColisao(player->retangulo,mapalido->BlocoGrama[i],player->g+GRAVIDADE,4))
+                {
+                    ajuste = mapalido->BlocoGrama[i].y - (player->retangulo.y+player->retangulo.height) ;
+                    player->retangulo.y+=ajuste;
+                    ajuste = 0;
+                    player->Pulou = 0;
+                    player->g=0;
+                    break;
+                }
     }
 }
 
-BLOCOS bloco_de_terra[mapas[7].qtdBlocosTerra];
+//--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+// MAIN()
+    int main(){
+            SetRandomSeed(time(NULL));
+            char nome_mapas[7][18];
+            init_nome_mapas(nome_mapas);
+            int index;
+            float ajuste;
+            Rectangle player_frame_rect = {0, 0, SPRITESIZE, SPRITESIZE};
+            TEXTURAS texturas;
+            ENTIDADE player;
+            MAPA mapas[7];
 
-Rectangle BlocoTerra[qtdBlocosTerra];
-Rectangle BlocoGrama[qtdBlocosGrama];
-Rectangle Armadilhas[qtdArmadilhas];
-Rectangle Coins[qtdCoins];
-
-index = 0;
-    for( int i=0; i<30; i++){
-        for( int j=0; j<61; j++){
-            currentchar = mapa[i][j];
-            if( currentchar==T ){
-        BlocoTerra[index].width = TILE ;
-        BlocoTerra[index].height = TILE ;
-        BlocoTerra[index].x = TILE*j ;
-        BlocoTerra[index].y = TILE*i ;
-        index++;
-    }}}
-index = 0;
-    for( int i=0; i<30; i++){
-        for( int j=0; j<61; j++){
-            currentchar = mapa[i][j];
-            if( currentchar==hashatag ){
-        BlocoGrama[index].width = TILE ;
-        BlocoGrama[index].height = TILE ;
-        BlocoGrama[index].x = TILE*j ;
-        BlocoGrama[index].y = TILE*i ;
-        index++;
-    }}}
-index = 0;
-    for( int i=0; i<30; i++){
-        for( int j=0; j<61; j++){
-            currentchar = mapa[i][j];
-            if( currentchar==X ){
-        Armadilhas[index].width = TILE+1 ;
-        Armadilhas[index].height = TILE+1 ; //esses +1 e menos 1 é pra ajustar a colisao com o espinho
-        Armadilhas[index].x = (TILE*j)-1 ;
-        Armadilhas[index].y = (TILE*i)-1 ;
-        index++;
-    }}}
-index = 0;
-    for( int i=0; i<30; i++){
-        for( int j=0; j<61; j++){
-            currentchar = mapa[i][j];
-            if( currentchar==C ){
-        Coins[index].width = TILE ;
-        Coins[index].height = TILE ;
-        Coins[index].x = (TILE*j) ;
-        Coins[index].y = (TILE*i) ;
-        index++;
-    }}}
-index = 0;
-
-    printf("\n\n\nspawnx:%f spawny:%f",(double)player.spawnX,player.spawnY);
+    leMapa(nome_mapas[0], &mapas[1], &player);
 
     Rectangle player_rect = {((double)player.spawnX), ((int)player.spawnY), SPRITESIZE, SPRITESIZE};
-    Rectangle player_frame_rect = {0, 0, SPRITESIZE, SPRITESIZE};
     player.framerec = player_frame_rect;
     player.retangulo = player_rect;
-
 
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
@@ -412,139 +443,40 @@ index = 0;
 //----------------------------------------------------------------------------------
 //TEXTURAS
     // NOTE: Texturas DEVEM ser carregadas depois da Window initialization (OpenGL context is required)
-
-    Texture2D BG3 = LoadTexture("texturas/BG3.png");        // Carregando Texturas
-    Texture2D BG1 = LoadTexture("texturas/BG1.png");
-    Texture2D grama_textura = LoadTexture("texturas/grama.png");
-    Texture2D terra = LoadTexture("texturas/terra.png");
-    Texture2D frame = LoadTexture("texturas/frame.png");
-    Texture2D trap = LoadTexture("texturas/trap.png");
-    Texture2D coin_texture = LoadTexture("texturas/coin.png");
-    Texture2D spriterunright = LoadTexture("texturas/spriterunright.png");
-    Texture2D spriterunleft = LoadTexture("texturas/spriterunleft.png");
-
-
-    printf("\nTexturas carregadas com sucesso.\n");
+        texturas.BG3 = LoadTexture("texturas/BG3.png");        // Carregando Texturas
+        texturas.BG1 = LoadTexture("texturas/BG1.png");
+        texturas.grama_textura = LoadTexture("texturas/grama.png");
+        texturas.terra = LoadTexture("texturas/terra.png");
+        texturas.frame = LoadTexture("texturas/frame.png");
+        texturas.trap = LoadTexture("texturas/trap.png");
+        texturas.coin_texture = LoadTexture("texturas/coin.png");
+        texturas.spriterunright = LoadTexture("texturas/spriterunright.png");
+        texturas.spriterunleft = LoadTexture("texturas/spriterunleft.png");
+        texturas.coin_grande = LoadTexture("texturas/coingrande.png");
+        texturas.heart= LoadTexture("texturas/heart.png");
 
 //----------------------------------------------------------------------------------
     SetTargetFPS(60);
 //--------------------------------------------------------------------------------------
+//MOEDAS E PORTAL X++;
 
 // LOOP PRINCIPAL DO JOGO
 
     while (!WindowShouldClose())
     {
 
-        // TODO: Atualiza as variáveis aqui
-            player.ColisaoDir = 0;
-            player.ColisaoEsq = 0;
-            player.ColisaoSup = 0;
-            //player.Repouso=0;
-
-
-//----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
 
-        //FUNDOS
-            DrawTexture(BG1, 0, 0, WHITE);
-            DrawTexture(BG3, 0, 0, WHITE);
-        //----------------------------------------------------------------------------------
-            //DrawRectangle((float)player.retangulo.x, (float)player.retangulo.y, player.retangulo.width, player.retangulo.height, RED);
-
-            //printf("Repouso:%d Pulou:%d g:%f  \n",player.Repouso,player.Pulou,player.g);
-            DrawTexture(frame,0,480,WHITE);
+                    printf("%d",player.Repouso);
 
 
-
-            Vector2 position = {player.retangulo.x,player.retangulo.y};
-            DrawTextureRec(spriterunleft, player.framerec, position, WHITE);
-
-
-
-
-
-            //------------------------------------------------------------------------------
-
-            // sera substituido por uma funçao que desenha todos blocos sem animacao .
-            /* essa funcao recebera a struct mapaLido,  que contém
-            um vetor de blocos, e a struct ENTIDADE*/
-
-            for(int k = 0; k<qtdBlocosGrama; k++){
-                DrawTexture(grama_textura,
-                            BlocoGrama[k].x,
-                            BlocoGrama[k].y,
-                            WHITE);
-                            }
-
-            for(int k = 0; k<qtdBlocosTerra; k++){
-                            DrawTexture(terra,
-                                        BlocoTerra[k].x,
-                                        BlocoTerra[k].y,
-                                        WHITE);
-                                        }
-            for(int k = 0; k<qtdCoins; k++){
-                            DrawTexture(coin_texture,
-                                        Coins[k].x,
-                                        Coins[k].y,
-                                        WHITE);
-                            if(CheckCollisionRecs(Coins[k], player.retangulo))
-                            {
-                                Coins[k].x = -32;
-                                Coins[k].y = -32;
-                            }
-                                        }
-            for(int k = 0; k<qtdArmadilhas; k++){
-                            DrawTexture(trap,
-                                        Armadilhas[k].x,
-                                        Armadilhas[k].y,
-                                        WHITE);
-                            if(CheckCollisionRecs(Armadilhas[k], player.retangulo))
-                            {
-                                player.g=0;
-                                player.Repouso=1;
-                                respawna(&player);
-                            }
-                        }
-            //------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//transformar em uma função também
-
-//loop colisoes
-    for (i = 0; i<qtdBlocosGrama; i++)
-{
-                player.ColisaoDir += haveraColisao(player.retangulo,BlocoGrama[i],SPEED,3);
-                player.ColisaoEsq += haveraColisao(player.retangulo,BlocoGrama[i],SPEED,1);
-                player.ColisaoSup+= haveraColisao(player.retangulo,BlocoGrama[i],SPEED*2-(player.g+GRAVIDADE),2);
-                player.Repouso+= haveraColisao(player.retangulo,BlocoGrama[i],player.g+GRAVIDADE,4);
-        //colisão com o teto
-         if(haveraColisao(player.retangulo,BlocoGrama[i],abs(SPEED*2-(player.g+GRAVIDADE)),2))
-            {
-                if(player.g>4){player.g=0;}
-                player.Pulou = 0;
-                break;
-            }
-        //colisão com o solo
-        if(haveraColisao(player.retangulo,BlocoGrama[i],player.g+GRAVIDADE,4))
-            {
-                ajuste = BlocoGrama[i].y - (player.retangulo.y+player.retangulo.height) ;
-
-                player.retangulo.y+=ajuste;
-                printf("%f",ajuste);
-                ajuste = 0;
-                player.Pulou = 0;
-                player.g=0;
-                break;
-            }
-}
-//------------------------------------------------------------------------------
-spritesPlayer(&player);
+renderiza_mapa(&mapas[1],&player,texturas);
+checacolisoes(&mapas[1],&player);
+hud(&mapas[1],&player,texturas);
 movimento(&player);
+atualizaPlayer(&player);
 gravidade(&player);
 
 if(IsKeyDown(KEY_R) ||((player.retangulo.x>960||player.retangulo.x<0)||(player.retangulo.y>480||player.retangulo.y<0)) )
