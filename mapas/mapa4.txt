@@ -6,8 +6,8 @@
 #                CCCCC                   # C               #
 #             ##########                 # C         CCCCC #
 #                                        # C        ########
-#  J                                                       #
-###########XXXXXXXXXXXXXXXXXX######            B           #
+#  J                                            K          #
+###########XXXXXXXXXXXXXXXXXX######                        #
 #                   X             ################         #
 #                   X                                      #
 #                   X                                      #

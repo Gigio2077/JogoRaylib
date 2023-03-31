@@ -44,6 +44,8 @@ typedef struct texturas{
     Texture2D ataqueleft;
     //TECLAS
     Texture2D C,Esc,N,Q,S,V,um,dois,tres;
+    //Inimigos
+    Texture2D abelharight,abelhaleft,capivararight,capivaraleft;
 
 
 
@@ -90,14 +92,17 @@ typedef struct bloco_tipo{
 
 typedef struct mapalido{
     char matriz[30][61];
-    int qtdBlocosGrama,qtdCoins,qtdBlocosTerra,qtdArmadilhas;
+    int qtdBlocosGrama,qtdCoins,qtdBlocosTerra,qtdArmadilhas,qtdBlocosInvisiveis;
     Rectangle BlocoTerra[200];
     Rectangle BlocoGrama[700];
     Rectangle Armadilhas[50];
     Rectangle Coins[70];
     Rectangle portal;
-
-    int posinimigos[15][1][1];
+    Rectangle blocoinvisivel[30];
+    int qtdCapivaras;
+    int qtdAbelhas;
+    int pos_capivaras[5][2];
+    int pos_abelhas [15][2];
     }MAPA;
 
 void HUD (MAPA *mapalido,ENTIDADE *player,TEXTURAS texturas,SAVE *saveatual){
@@ -118,6 +123,21 @@ DrawText((TextFormat("fps: %d", GetFPS())), 840, 490, 35, MAROON);
 
 }
 
+void respawna(ENTIDADE *player,int morreu,SAVE *saveatual){
+    if(IsKeyDown(KEY_R) ||
+      ((player->retangulo.x>960||player->retangulo.x<0)||(player->retangulo.y>480||player->retangulo.y<0))||
+       morreu==1)
+        {
+            saveatual->vidas--;
+            printf("respawn\n");
+            player->g=0;
+            player->Pulou=0;
+            player->Repouso=0;
+            player->retangulo.x = player->spawnX;
+            player->retangulo.y = player->spawnY;
+        }
+
+    }
 
 
 
@@ -158,7 +178,7 @@ void GUI(TEXTURAS texturas,SAVE *saveatual,SAVE *save1,SAVE *save2,SAVE *save3,E
         if(IsKeyPressed(KEY_N)){
                     saveatual->fase=1;
                     saveatual->trocarmapa=1;
-                    saveatual->vidas=2;
+                    saveatual->vidas=10;
                     Paused = !Paused;
                 }
         if(IsKeyPressed(KEY_C)){
@@ -179,7 +199,7 @@ void GUI(TEXTURAS texturas,SAVE *saveatual,SAVE *save1,SAVE *save2,SAVE *save3,E
             carrega_save(saveatual,"save1.bin");
             Paused = !Paused;
             saveatual->trocarmapa = 1;
-            respawna(&player,1);
+            respawna(&player,1,&saveatual);
         }
         if(saveatual->menustate==3){
             salva_save(saveatual,"save1.bin");
@@ -193,7 +213,7 @@ void GUI(TEXTURAS texturas,SAVE *saveatual,SAVE *save1,SAVE *save2,SAVE *save3,E
             carrega_save(saveatual,"save2.bin");
             Paused = !Paused;
             saveatual->trocarmapa = 1;
-            respawna(&player,1);
+            respawna(&player,1,&saveatual);
         }
         if(saveatual->menustate==3){
             salva_save(saveatual,"save2.bin");
@@ -207,7 +227,7 @@ void GUI(TEXTURAS texturas,SAVE *saveatual,SAVE *save1,SAVE *save2,SAVE *save3,E
             carrega_save(saveatual,"save3.bin");
             Paused = !Paused;
             saveatual->trocarmapa = 1;
-            respawna(&player,1);
+            respawna(&player,1,&saveatual);
         }
         if(saveatual->menustate==3){
             salva_save(saveatual,"save3.bin");
@@ -321,7 +341,10 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
         int qtdBlocosGrama = 0;
         int qtdCoins = 0;
         int qtdBlocosTerra = 0;
+        int qtdBlocosInv = 0;
         int qtdArmadilhas = 0;
+        int capivara_index = 0;
+        int abelha_index = 0;
 
 
         for(int i = 0; i<31; i++) {
@@ -337,6 +360,8 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
         char J = 'J';
         char C = 'C';
         char P = 'P';
+        char U = 'U';
+        char O = 'O';
 
         for(int i=0; i<30; i++) {
             for(int j=0; j<61; j++) {
@@ -375,8 +400,26 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
                         mapalido->portal.y = TILE*i;
                         mapalido->portal.width = 14;
                         mapalido->portal.height = 53;
+                        break;
+
+                    case 'K':
+                        mapalido->pos_capivaras[capivara_index][0] = TILE*j;
+                        mapalido->pos_capivaras[capivara_index][1] = TILE*i;
+                        capivara_index++;
+
+                        break;
+
+                    case 'A':
+                        mapalido->pos_abelhas[abelha_index][0] = TILE*j;
+                        mapalido->pos_abelhas[abelha_index][1] = TILE*i;
+                        abelha_index++;
+                        printf("abelgha lida");
 
 
+                    case 'O'://bloco invisível que apenas os animais atingem, para delimitar
+                            //até onde eles andam
+
+                        qtdBlocosInv++;
 
                     default:
                         // caso não seja nenhum dos caracteres desejados, não faz nada
@@ -389,6 +432,14 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
         mapalido->qtdCoins = qtdCoins;
         mapalido->qtdBlocosTerra = qtdBlocosTerra;
         mapalido->qtdArmadilhas = qtdArmadilhas;
+        mapalido->qtdAbelhas = abelha_index;
+        mapalido->qtdCapivaras = capivara_index;
+        mapalido->qtdBlocosInvisiveis=qtdBlocosInv;
+
+
+
+
+
 
         int index = 0;
             for( int i=0; i<30; i++){
@@ -435,6 +486,16 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
                 index++;
             }}}
         index = 0;
+            for( int i=0; i<30; i++){
+                for( int j=0; j<61; j++){
+                    currentchar = mapalido->matriz[i][j];
+                    if( currentchar==O ){
+                mapalido->blocoinvisivel[index].width = TILE ;
+                mapalido->blocoinvisivel[index].height = TILE ;
+                mapalido->blocoinvisivel[index].x = (TILE*j) ;
+                mapalido->blocoinvisivel[index].y = (TILE*i) ;
+            index++;
+        }}}
 
     }
 }
@@ -452,7 +513,6 @@ void init_nome_mapas(char nome_mapas[][18]) {
 
 void renderiza_mapa(MAPA *mapalido,ENTIDADE *player,TEXTURAS texturas){
 
-                //TROCAR BACKGROUND DE ACORDO COM player.fase
                 //animar background
 
                 Vector2 position_player = {player->retangulo.x,player->retangulo.y};
@@ -487,6 +547,7 @@ void renderiza_mapa(MAPA *mapalido,ENTIDADE *player,TEXTURAS texturas){
                                             mapalido->BlocoGrama[k].y,
                                             WHITE);
 
+
                                             }
                 for(int k = 0; k<mapalido->qtdArmadilhas; k++){
                 Vector2 position_portal = {mapalido->Armadilhas[k].x,mapalido->Armadilhas[k].y};
@@ -496,7 +557,6 @@ void renderiza_mapa(MAPA *mapalido,ENTIDADE *player,TEXTURAS texturas){
                                      WHITE);}
 
 
-            //DrawTextureRec(texturas.spriterunright, player->framerec, position_player, WHITE);
 
 
     }
@@ -533,8 +593,6 @@ void atualizaPlayer(ENTIDADE *player){
 
 }
 
-
-
 void spritesPlayer(ENTIDADE *player,TEXTURAS texturas){
 
     if(player->framerec.width!=32){
@@ -556,7 +614,7 @@ void spritesPlayer(ENTIDADE *player,TEXTURAS texturas){
             if(player->direita){textura_atual=texturas.mortalright;}
             else{textura_atual=texturas.mortalleft;}
             }
-    if(IsKeyDown(KEY_LEFT)&&!player->g<5&&!player->Pulou){
+    if(IsKeyDown(KEY_LEFT) && (!player->g<5) && (!player->Pulou)){
             textura_atual=texturas.runleft;}
     if(IsKeyDown(KEY_RIGHT)&&!player->g<5&&!player->Pulou){
             textura_atual=texturas.runright;}
@@ -566,21 +624,6 @@ void spritesPlayer(ENTIDADE *player,TEXTURAS texturas){
             }
     DrawTextureRec(textura_atual, player->framerec, position_player, WHITE);
 }
-
-void respawna(ENTIDADE *player,int morreu){
-    if(IsKeyDown(KEY_R) ||
-      ((player->retangulo.x>960||player->retangulo.x<0)||(player->retangulo.y>480||player->retangulo.y<0))||
-       morreu==1)
-        {
-            printf("respawn\n");
-            player->g=0;
-            player->Pulou=0;
-            player->Repouso=0;
-            player->retangulo.x = player->spawnX;
-            player->retangulo.y = player->spawnY;
-        }
-
-    }
 
 int haveraColisao (Rectangle player, Rectangle parede, int delta, int direcao){
     switch(direcao)
@@ -674,6 +717,7 @@ void gravidade(ENTIDADE *player) {
 void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
 
     float ajuste = 0;
+
 //blocos de terra(quebráveis)
  for(int k = 0; k<mapalido->qtdBlocosTerra; k++){
         if(CheckCollisionRecs(mapalido->BlocoTerra[k], player->ataque[0]))
@@ -698,7 +742,7 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
             saveatual->vidas--;
             player->g=0;
             player->Repouso=1;
-            respawna(player,1);
+            respawna(player,1,&saveatual);
             }
     }
 
@@ -769,10 +813,10 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
 }
 
 void ataques(ENTIDADE *player, TEXTURAS texturas){
-player->framerec.width = 42;
-player->framerec.height = 32;
+    player->framerec.width = 42;
+    player->framerec.height = 32;
 
-    Color invis = { 255, 0, 0, 80 }; // Red with 50% transparency
+    Color invis = { 255, 0, 0, 0 }; // Red with 50% transparency
 
 
     if(IsKeyPressed(KEY_T)){
@@ -808,8 +852,105 @@ player->framerec.height = 32;
 
 }
 
+void inicializa_inimigos(MAPA *mapalido, ENTIDADE capivaras[],ENTIDADE abelhas[]){
+
+    for(int i = 0; i<mapalido->qtdCapivaras; i++){
+        capivaras[i].spawnX = mapalido->pos_capivaras[i][0];
+        capivaras[i].spawnY = mapalido->pos_capivaras[i][1];
+        capivaras[i].retangulo.x = capivaras[i].spawnX;
+        capivaras[i].retangulo.y = capivaras[i].spawnY;
+        capivaras[i].retangulo.width = 64;
+        capivaras[i].retangulo.height = 35;
+        capivaras[i].direita = GetRandomValue(0, 1);
+
+    }
+
+    for(int i = 0; i<mapalido->qtdAbelhas;i++){
+        abelhas[i].spawnX = mapalido->pos_abelhas[i][0];
+        abelhas[i].spawnY = mapalido->pos_abelhas[i][1];
+        abelhas[i].retangulo.x = abelhas[i].spawnX;
+        abelhas[i].retangulo.y = abelhas[i].spawnY;
+        abelhas[i].direita = GetRandomValue(0, 1);
+        abelhas[i].retangulo.width = 25;
+        abelhas[i].retangulo.height = 27;
+
+    }
+
+}
+
+void renderiza_inimigos(MAPA *mapalido,ENTIDADE capivaras[],ENTIDADE abelhas[],ENTIDADE *player,TEXTURAS texturas){
+
+    Rectangle frame_abelhas = {0,0,25,27};
+    Rectangle frame_capivaras = {0,0,64,35};
 
 
+    for(int i = 0; i<mapalido->qtdAbelhas; i++){
+        frame_abelhas.x=player->currentframe*25;
+        Vector2 position_abelha = {abelhas[i].retangulo.x,abelhas[i].retangulo.y};
+        DrawTextureRec(texturas.abelhaleft, frame_abelhas, position_abelha, WHITE);
+
+
+    }
+
+    for(int i = 0; i<mapalido->qtdCapivaras; i++){
+        frame_capivaras.x=player->currentframe*64;
+        Vector2 position_capivara = {capivaras[i].retangulo.x,capivaras[i].retangulo.y-3};
+        DrawTextureRec(texturas.capivaraleft, frame_capivaras, position_capivara, WHITE);
+
+    }
+
+
+}
+
+void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],ENTIDADE *player,SAVE *saveatual){
+
+
+
+    //colisao animal com bloco invisível
+    for(int k = 0; k<mapalido->qtdBlocosInvisiveis; k++){
+            for (int l = 0; l<mapalido->qtdAbelhas; l++){
+
+                if(abelhas[l].direita==1){abelhas[l].retangulo.x = abelhas[l].retangulo.x+0.7;}
+                else{abelhas[l].retangulo.x = abelhas[l].retangulo.x-0.7;}
+
+                if(CheckCollisionRecs(mapalido->blocoinvisivel[k], abelhas[l].retangulo))
+                {
+                    abelhas[l].direita = !(abelhas[l].direita);
+                }
+            }
+        }
+    for(int k = 0; k<mapalido->qtdBlocosInvisiveis; k++){
+            for (int l = 0; l<mapalido->qtdCapivaras; l++){
+
+                if(capivaras[l].direita==1){capivaras[l].retangulo.x = capivaras[l].retangulo.x+0.7;}
+                else{capivaras[l].retangulo.x = capivaras[l].retangulo.x-0.7;}
+
+                if(CheckCollisionRecs(mapalido->blocoinvisivel[k], capivaras[l].retangulo))
+                {
+                    capivaras[l].direita = !capivaras[l].direita;
+                }
+
+
+            }
+        }
+
+
+    //colisao player com animals-player morre
+    for (int l = 0; l<mapalido->qtdAbelhas; l++){
+        if(CheckCollisionRecs(abelhas[l].retangulo, player->retangulo)){
+            respawna(player,1,&saveatual);
+            printf("aaaaaaaaaaaaaaaa");
+            }
+
+    }
+
+    //colisao ataque com animais- animal morre
+
+
+
+
+
+}
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
@@ -823,16 +964,23 @@ player->framerec.height = 32;
 
             Rectangle player_frame_rect = {0, 0, SPRITESIZE, SPRITESIZE};
 
+
             TEXTURAS texturas;
+
+            ENTIDADE abelhas[15];
+            ENTIDADE capivaras[5];
+
             ENTIDADE player;
                 player.frame = 0;
                 player.retangulo.width=SPRITESIZE;
                 player.retangulo.height=SPRITESIZE;
+                player.framerecportal = player_frame_rect;
+                player.framerecportal.width = 16;
+                player.framerec = player_frame_rect;
+
             MAPA mapas[10];
 
             SAVE save1;SAVE save2; SAVE save3;
-
-
 
             SAVE saveatual;
                         saveatual.trocarmapa = 0;
@@ -842,11 +990,7 @@ player->framerec.height = 32;
 
     //leMapa(nome_mapas[1], &mapas[1], &player);
 
-    //Rectangle player_rect = {((double)player.spawnX), ((int)player.spawnY), SPRITESIZE, SPRITESIZE};
-            player.framerecportal = player_frame_rect;
-            player.framerecportal.width = 16;
-            player.framerec = player_frame_rect;
-    //player.retangulo = player_rect;
+
 
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
@@ -893,12 +1037,15 @@ player->framerec.height = 32;
         texturas.Q = LoadTexture("texturas/Q-Key.png");
         texturas.S = LoadTexture("texturas/S-Key.png");
         texturas.V = LoadTexture("texturas/V-Key.png");
-
+        //NUMEROS
         texturas.um = LoadTexture("texturas/um.png");
         texturas.dois = LoadTexture("texturas/dois.png");
         texturas.tres = LoadTexture("texturas/tres.png");
-
-
+        //INIMIGOS
+        texturas.capivararight = LoadTexture("texturas/capivararight.png");
+        texturas.capivaraleft = LoadTexture("texturas/capivaraleft.png");
+        texturas.abelhaleft = LoadTexture("texturas/abelhaleft.png");
+        texturas.abelharight = LoadTexture("texturas/abelharight.png");
 
 //----------------------------------------------------------------------------------
     SetTargetFPS(60);
@@ -913,7 +1060,6 @@ player->framerec.height = 32;
             carrega_save(&save2,"save2.bin");
             carrega_save(&save3,"save3.bin");
 
-        printf("%d\n",player.atacando);
         if(IsKeyPressed(KEY_ESCAPE)&& Paused==false) {
                 Paused = !Paused;
                 saveatual.menustate = 1;
@@ -938,7 +1084,9 @@ player->framerec.height = 32;
             {
                 saveatual.trocarmapa = 0;
                 leMapa(nome_mapas[saveatual.fase], &mapas[saveatual.fase], &player);
-                respawna(&player,1);
+                inicializa_inimigos(&mapas[saveatual.fase],capivaras,abelhas);
+
+                respawna(&player,1,&saveatual);
             }
         if(Paused){
                 if(saveatual.menustate==1){SetExitKey(KEY_Q);}
@@ -968,11 +1116,12 @@ player->framerec.height = 32;
 
             HUD(&mapas[saveatual.fase],&player,texturas,&saveatual);
 
-
+            movimentos_inimigos(&mapas[saveatual.fase],abelhas,capivaras,&player,&saveatual);
+            renderiza_inimigos(&mapas[saveatual.fase],capivaras,abelhas,&player,texturas);
             movimento(&player);
             atualizaPlayer(&player);
             gravidade(&player);
-            respawna(&player,0);
+            respawna(&player,0,&saveatual);
             ataques(&player,texturas);
             }
 

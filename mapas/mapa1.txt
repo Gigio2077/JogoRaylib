@@ -11,13 +11,13 @@
 #    ########    #X    ###             # #   B      ########
 #                #X      T             ###               CC#
 #                B       T             ########          CC#
-# CCC            B       T             #                   #
-######    B      B CCCC  T       Z     #          B     ####
+# CCC            B       T       K     #         O         #
+######    B      B CCCC  T             #          B     ####
 #         B      ########T      ####   #         BBC       #
 #         B              B      B      #B         ######   #
 #     CCCC               B      B      # B             #   #
 #   #######              B      B      #  B            #XXX#
-#          # CCC                B      #   B           #####
+#          #OCCC     A        O B      #   B           #####
 #          #####          CCC          #    B CCC          #
 #                   ##########   #XXXXX#     #####         #
 #          XX            #       B     #       B           #
@@ -26,5 +26,5 @@
 #          BB            #XXXXX###     #     #####         #
 #B         BB            #             #                   #
 #BB        BB            #                                 #
-#BBB       B#XXXXXXXXXXXX# CCCC Z     BBB  Z   #XXXXXXXXXXX#
+#BBB       B#XXXXXXXXXXXX# CCCC       BBB  Z   #XXXXXXXXXXX#
 ############################################################
