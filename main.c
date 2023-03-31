@@ -119,6 +119,7 @@ DrawText((TextFormat("fps: %d", GetFPS())), 840, 490, 35, MAROON);
 
 
 
+
 //FUNCOES MENU
 void salva_save(const SAVE *save,  char nomearquivo[]) {
     FILE *fp;
@@ -255,12 +256,12 @@ void GUI(TEXTURAS texturas,SAVE *saveatual,SAVE *save1,SAVE *save2,SAVE *save3,E
 
                 DrawTexture(texturas.dois,358,265,WHITE);
                 DrawText("slot2",390,260,36,MAROON);
-                DrawText((TextFormat("vidas:%d\tfase:%d", save1->vidas,save2->fase)),485,270,16,MAROON);
+                DrawText((TextFormat("vidas:%d\tfase:%d", save2->vidas,save2->fase)),485,270,16,MAROON);
 
 
                 DrawTexture(texturas.tres,358,305,WHITE);
                 DrawText("slot3",390,300,36,MAROON);
-                DrawText((TextFormat("vidas:%d\tfase:%d", save1->vidas,save3->fase)),485,310,16,MAROON);
+                DrawText((TextFormat("vidas:%d\tfase:%d", save3->vidas,save3->fase)),485,310,16,MAROON);
 
 
                 DrawTexture(texturas.V,358,425,WHITE);
@@ -284,12 +285,12 @@ void GUI(TEXTURAS texturas,SAVE *saveatual,SAVE *save1,SAVE *save2,SAVE *save3,E
 
                 DrawTexture(texturas.dois,358,265,WHITE);
                 DrawText("slot2",390,260,36,MAROON);
-                DrawText((TextFormat("vidas:%d\tfase:%d", save1->vidas,save2->fase)),485,270,16,MAROON);
+                DrawText((TextFormat("vidas:%d\tfase:%d", save2->vidas,save2->fase)),485,270,16,MAROON);
 
 
                 DrawTexture(texturas.tres,358,305,WHITE);
                 DrawText("slot3",390,300,36,MAROON);
-                DrawText((TextFormat("vidas:%d\tfase:%d", save1->vidas,save3->fase)),485,310,16,MAROON);
+                DrawText((TextFormat("vidas:%d\tfase:%d", save3->vidas,save3->fase)),485,310,16,MAROON);
 
 
                 DrawTexture(texturas.V,358,425,WHITE);
@@ -755,6 +756,7 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
                 player.retangulo.width=SPRITESIZE;
                 player.retangulo.height=SPRITESIZE;
             MAPA mapas[10];
+
             SAVE save1;SAVE save2; SAVE save3;
 
 
@@ -834,10 +836,10 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
     while (!WindowShouldClose())
     {
 
+            carrega_save(&save1,"save1.bin");
+            carrega_save(&save2,"save2.bin");
+            carrega_save(&save3,"save3.bin");
 
-        carrega_save(&save1,"save1.bin");
-        carrega_save(&save2,"save2.bin");
-        carrega_save(&save3,"save3.bin");
 
         if(IsKeyPressed(KEY_ESCAPE)&& Paused==false) {
                 Paused = !Paused;
@@ -854,6 +856,7 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
         //se morrer, voltar tudo ao default(voltar ao menu inicial)
         if(saveatual.vidas==0 && Paused == false){
             saveatual.fase = 0;
+            saveatual.menustate = 1;
             Paused = !Paused;
         }
 
