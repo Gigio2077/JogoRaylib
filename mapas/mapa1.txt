@@ -9,10 +9,10 @@
 #      B    #    #X      #             # #   B             #
 #    CCBCC  #    #X      #             # #   B       Z     #
 #    ########    #X    ###             # #   B      ########
-#                #X      #             ###               CC#
-#                B       #             ########          CC#
-# CCC            B       #             #                   #
-######    B      B CCCC  #       Z     #          B     ####
+#                #X      T             ###               CC#
+#                B       T             ########          CC#
+# CCC            B       T             #                   #
+######    B      B CCCC  T       Z     #          B     ####
 #         B      ########T      ####   #         BBC       #
 #         B              B      B      #B         ######   #
 #     CCCC               B      B      # B             #   #

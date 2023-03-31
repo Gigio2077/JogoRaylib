@@ -75,6 +75,7 @@ typedef struct entidade{
 
         //variavies funcionais
         int fase;
+
         Rectangle ataque[5];
         int atacando;
 
@@ -352,6 +353,7 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
                         player->Pulou = 0;
                         player->direita = 1;
                         player->frame = 0;
+                        player->atacando = 0;
                         for(int z = 0;z<5;z++){
                         player->ataque[z].x=-100;}
 
@@ -517,21 +519,31 @@ void atualizaPlayer(ENTIDADE *player){
 
     if (player->frame >= (8))
         {
+            if(player->atacando>0)player->atacando--;
             player->frame = 0;
             player->currentframe++;
             if (player->currentframe > 4) player->currentframe = 0;
 
+            }
+
+
+
             player->framerec.x = (float)player->currentframe*SPRITESIZE;
             player->framerecportal.x = (float)player->currentframe*TILE;
 
-        }
-
 }
+
+
 
 void spritesPlayer(ENTIDADE *player,TEXTURAS texturas){
 
+    if(player->framerec.width!=32){
+        player->framerec.width = 32;
+        player->framerec.height = 32;
+
+    }
     Texture2D textura_atual;
-    Vector2 position_player = {player->retangulo.x+4,player->retangulo.y+4};
+    Vector2 position_player = {player->retangulo.x,player->retangulo.y};
     if(!IsKeyDown(KEY_LEFT)&&!(IsKeyDown(KEY_RIGHT)&&player->Repouso)){
             if(player->direita){textura_atual=texturas.idleright;}
             else{textura_atual=texturas.idleleft;}
@@ -662,6 +674,14 @@ void gravidade(ENTIDADE *player) {
 void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
 
     float ajuste = 0;
+//blocos de terra(quebráveis)
+ for(int k = 0; k<mapalido->qtdBlocosTerra; k++){
+        if(CheckCollisionRecs(mapalido->BlocoTerra[k], player->ataque[0]))
+            {
+            mapalido->BlocoTerra[k].x = -100;
+            }
+    }
+
 
 //pegar moedas
     for(int k = mapalido->qtdCoins-1; k >= 0; k--){
@@ -715,26 +735,79 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
 
                 }
     }
-}
 
-/*void ataques(ENTIDADE *player, TEXTURAS texturas){
 
-    if(IsKeyDown(KEY_Q)){
-            player->atacando=1;
-            player->currentframe =0
+    for (int i = 0; i<mapalido->qtdBlocosTerra; i++)
+        {
+            player->ColisaoDir += haveraColisao(player->retangulo,mapalido->BlocoTerra[i],SPEED,3);
+            player->ColisaoEsq += haveraColisao(player->retangulo,mapalido->BlocoTerra[i],SPEED,1);
+            player->ColisaoSup+= haveraColisao(player->retangulo,mapalido->BlocoTerra[i],SPEED*2-(player->g+GRAVIDADE),2);
+            player->Repouso+= haveraColisao(player->retangulo,mapalido->BlocoTerra[i],player->g+GRAVIDADE,4);
 
+//colisão com o teto
+            if(haveraColisao(player->retangulo,mapalido->BlocoTerra[i],abs(SPEED*2-(player->g+GRAVIDADE)),2))
+                {
+                    if(player->g>4){player->g=0;}
+
+                    player->Pulou = 0;
+                }
+//colisão com o solo
+            if(haveraColisao(player->retangulo,mapalido->BlocoTerra[i],player->g+GRAVIDADE,4))
+                {
+                ajuste = mapalido->BlocoTerra[i].y - (player->retangulo.y+player->retangulo.height) ;
+                player->retangulo.y+=ajuste;
+                ajuste = 0;
+                player->Pulou = 0;
+                player->g=0;
+
+                }
     }
 
 
-        while(player->atacando==1){
-            if(player->currentframe!=4){
-            Vector2 position_ataque = {(player->retangulo.x-5),player->retangulo.y-5};
-            player->framerecportal.x = (float)player->currentframe*42;
-            DrawTextureRec(texturas.ataqueright, player->framerecportal, position_ataque, WHITE);
-            }
-            else{player->atacando}
+
+
 }
-*/
+
+void ataques(ENTIDADE *player, TEXTURAS texturas){
+player->framerec.width = 42;
+player->framerec.height = 32;
+
+    Color invis = { 255, 0, 0, 80 }; // Red with 50% transparency
+
+
+    if(IsKeyPressed(KEY_T)){
+                player->atacando=4;
+                player->currentframe = 0;}
+    if((player->atacando)>0){
+                Vector2 position_player = {player->retangulo.x, player->retangulo.y};
+                player->framerec.x = player->currentframe*player->framerec.width;
+
+                if(player->direita){
+                    player->ataque[0].x = player->retangulo.x+10;
+                    player->ataque[0].y = player->retangulo.y-6;
+                    player->ataque[0].height = 40;
+                    player->ataque[0].width = 42;
+
+                    DrawTextureRec(texturas.ataqueright, player->framerec, position_player, WHITE);
+                    DrawRectangleRec(player->ataque[0],invis);
+                }
+                 if(!player->direita){
+                    player->ataque[0].x = player->retangulo.x-10;
+                    player->ataque[0].y = player->retangulo.y-6;
+                    player->ataque[0].height = 40;
+                    player->ataque[0].width = 42;
+
+                    DrawTextureRec(texturas.ataqueleft, player->framerec, position_player, WHITE);
+                    DrawRectangleRec(player->ataque[0],invis);
+                    //DrawRectangle(player->retangulo.x-10,player->retangulo.y-6,40,42,invis);
+                }
+
+            }
+            else{player->ataque[0].x = -100;}
+
+
+}
+
 
 
 //--------------------------------------------------------------------------------------
@@ -840,7 +913,7 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
             carrega_save(&save2,"save2.bin");
             carrega_save(&save3,"save3.bin");
 
-
+        printf("%d\n",player.atacando);
         if(IsKeyPressed(KEY_ESCAPE)&& Paused==false) {
                 Paused = !Paused;
                 saveatual.menustate = 1;
@@ -889,7 +962,7 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
 
             renderiza_mapa(&mapas[saveatual.fase],&player,texturas);
 
-            spritesPlayer(&player, texturas);
+            if(!player.atacando)spritesPlayer(&player, texturas);
 
             checacolisoes(&mapas[saveatual.fase],&player,&saveatual);
 
@@ -897,10 +970,10 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
 
 
             movimento(&player);
-            gravidade(&player);
             atualizaPlayer(&player);
+            gravidade(&player);
             respawna(&player,0);
-            //ataques(&player,texturas);
+            ataques(&player,texturas);
             }
 
         EndDrawing();
