@@ -5,20 +5,20 @@
 #                                        # C               #
 #                CCCCC                   # C               #
 #             ##########                 # C         CCCCC #
-#                                        # C        ########
-#  J                                            K          #
-###########XXXXXXXXXXXXXXXXXX######                        #
+#                                                   ########
+#  J                               O            K     O    #
+###########XXXXXXXXXXXXXXXXXX####                          #
 #                   X             ################         #
 #                   X                                      #
 #                   X                                      #
 #                   X                                      #
 #                   X                                      #
-#         X         X         X                            #
+#         X         X         X  O     A                O  #
 #         X                   X                            #
 #         X                   X    #########################
 #      #############################                       #
 #                                                          #
-#                                                          #
+#          O       A         O                             #
 #                                                          #
 #                                                          #
 #                  CCCCCCCCCCCC                            #
