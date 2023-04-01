@@ -42,6 +42,8 @@ typedef struct texturas{
     Texture2D fallleft;
     Texture2D ataqueright;
     Texture2D ataqueleft;
+    Texture2D poder;
+    Texture2D podersimbolo;
     //TECLAS
     Texture2D C,Esc,N,Q,S,V,um,dois,tres;
     //Inimigos
@@ -54,10 +56,11 @@ typedef struct texturas{
 
 
 
+
 }TEXTURAS;
 
 typedef struct save {
-    int fase,vidas,score,trocarmapa,menustate;
+    int fase,vidas,score,trocarmapa,menustate,poderes;
 } SAVE;
 
 typedef struct entidade{
@@ -70,8 +73,9 @@ typedef struct entidade{
 
         //variaveis animacoes
         int frame,currentframe;
-        int direita;
+        int direita,podervoando,poder_direita;
         Texture2D texturaatual;
+        Rectangle frame_poder;
         Rectangle framerec;
         Rectangle framerecportal;
 
@@ -108,7 +112,7 @@ typedef struct mapalido{
 void HUD (MAPA *mapalido,ENTIDADE *player,TEXTURAS texturas,SAVE *saveatual){
 
 //rawRectangle(int posX, int posY, int width, int height, Color color);
-DrawRectangle(0,480,960,50,DARKGRAY);
+DrawRectangle(0,480,960,50,LIGHTGRAY);
 
 DrawText((TextFormat("x %d", mapalido->qtdCoins)), 80, 490, 35, MAROON);
 DrawTexture(texturas.coin_grande,0,473,WHITE);
@@ -116,9 +120,11 @@ DrawTexture(texturas.coin_grande,0,473,WHITE);
 DrawText((TextFormat("x %d", saveatual->vidas)), 250, 490, 35, MAROON);
 DrawTexture(texturas.heart,170,473,WHITE);
 
-DrawText((TextFormat("FASE: %d", saveatual->fase)), 380, 490, 35, MAROON);
-DrawText((TextFormat("SCORE: %d", saveatual->score)), 535, 490, 35, MAROON);
+DrawText((TextFormat("FASE: %d", saveatual->fase)), 340, 490, 35, MAROON);
+DrawText((TextFormat("SCORE: %d", saveatual->score)), 625, 490, 35, MAROON);
 
+DrawTexture(texturas.podersimbolo,480,485,WHITE);
+DrawText((TextFormat("x%d", saveatual->poderes)), 525, 490, 35, MAROON);
 
 DrawText((TextFormat("fps: %d", GetFPS())), 840, 490, 35, MAROON);
 
@@ -126,7 +132,7 @@ DrawText((TextFormat("fps: %d", GetFPS())), 840, 490, 35, MAROON);
 }
 
 void respawna(ENTIDADE *player,int morreu,SAVE *saveatual){
-    if(IsKeyDown(KEY_R) ||
+    if(IsKeyPressed(KEY_R) ||
       ((player->retangulo.x>960||player->retangulo.x<0)||(player->retangulo.y>480||player->retangulo.y<0))||
        morreu==1)
         {
@@ -373,6 +379,9 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
 
                 switch(currentchar) {
                     case 'J':
+                        for(int z = 0;z<5;z++){
+                        player->ataque[z].x=-100;}
+
                         player->spawnX = TILE*j;
                         player->spawnY = TILE*i;
                         player->Repouso = 1;
@@ -383,8 +392,18 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
                         player->direita = 1;
                         player->frame = 0;
                         player->atacando = 0;
-                        for(int z = 0;z<5;z++){
-                        player->ataque[z].x=-100;}
+                        player->frame_poder.width = 32;
+                        player->frame_poder.height = 32;
+                        player->frame_poder.x = 0;
+                        player->frame_poder.y = 0;
+                        player->ataque[1].x = 1;
+                        player->ataque[1].y = 1;
+                        player->ataque[1].height=32;
+                        player->ataque[1].width=32;
+                        player->podervoando=0;
+
+
+
 
                         break;
                     case '#':
@@ -503,11 +522,11 @@ void leMapa(char nomemapa[], MAPA *mapalido, ENTIDADE *player){
 }
 
 void init_nome_mapas(char nome_mapas[][18]) {
-    for(int i = 1; i<10; i++){
+    for(int i = 1; i<18; i++){
         sprintf(nome_mapas[i], "mapas/mapa%d.txt", i);
     }
 
-    for(int i = 1; i<10; i++){
+    for(int i = 1; i<18; i++){
         printf("\nA string em nome_mapas[%d] eh:%s",i,nome_mapas[i]);
 
     }
@@ -724,7 +743,11 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
  for(int k = 0; k<mapalido->qtdBlocosTerra; k++){
         if(CheckCollisionRecs(mapalido->BlocoTerra[k], player->ataque[0]))
             {
-            mapalido->BlocoTerra[k].x = -100;
+            mapalido->BlocoTerra[k].x = -1000;
+            mapalido->BlocoTerra[k].y = -5000;
+
+
+            if(GetRandomValue(1, 5)==1){saveatual->poderes++;}
             }
     }
 
@@ -738,10 +761,12 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
             saveatual->score+=10;
             }
     }
+
 //morrer espinhos
     for(int k = 0; k<mapalido->qtdArmadilhas; k++){
         if(CheckCollisionRecs(mapalido->Armadilhas[k], player->retangulo))
             {
+            saveatual->score = (saveatual->score)-100;
             saveatual->vidas--;
             player->g=0;
             player->Repouso=1;
@@ -755,6 +780,8 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
         saveatual->fase++;
         saveatual->vidas++;
         saveatual->trocarmapa = 1;
+        saveatual->score+=250;
+
         }
 
     for (int i = 0; i<mapalido->qtdBlocosGrama; i++)
@@ -815,14 +842,52 @@ void checacolisoes(MAPA *mapalido, ENTIDADE *player, SAVE *saveatual){
 
 }
 
+void lanca_poder(ENTIDADE *player, TEXTURAS texturas,SAVE *saveatual){
+
+    Color invis = { 255, 0, 0, 0 };
+
+    if(IsKeyPressed(KEY_SPACE) && !player->podervoando&&saveatual->poderes>0){
+        saveatual->poderes--;
+        if(player->direita){player->poder_direita = 1;}
+        else{player->poder_direita = 0;}
+
+        player->podervoando = !player->podervoando ;
+        player->ataque[1].x=player->retangulo.x;
+        player->ataque[1].y=player->retangulo.y+5;
+
+    }
+
+    if(player->podervoando == 1){
+        player->frame_poder.x = player->currentframe*32;
+        DrawTextureRec(texturas.poder, player->frame_poder, (Vector2){player->ataque[1].x, player->ataque[1].y}, WHITE);
+        DrawRectangleRec(player->ataque[1],invis);
+
+        if(player->poder_direita == 1){
+            player->ataque[1].x = player->ataque[1].x +3;}
+        else{player->ataque[1].x = player->ataque[1].x -3;}
+}
+
+
+        if(player->ataque[1].x>960||player->ataque[1].x<0||
+           player->ataque[1].y>530||player->ataque[1].x<0)
+           {player->podervoando =!player->podervoando;}
+}
+
+
+
+
+
+
+
+
 void ataques(ENTIDADE *player, TEXTURAS texturas){
     player->framerec.width = 42;
     player->framerec.height = 32;
 
-    Color invis = { 255, 0, 0, 0 }; // Red with 50% transparency
+    Color invis = { 255, 0, 0, 0 }; // vermelho 100% transparente
 
 
-    if(IsKeyPressed(KEY_T)){
+    if(IsKeyPressed(KEY_Z)){
                 player->atacando=4;
                 player->currentframe = 0;}
     if((player->atacando)>0){
@@ -949,12 +1014,16 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
     for (int l = 0; l<mapalido->qtdAbelhas; l++){
         if(CheckCollisionRecs(abelhas[l].retangulo, player->retangulo)){
             respawna(player,1,&saveatual);
+            saveatual->score = (saveatual->score)-100;
+
             }
 
     }
     for (int l = 0; l<mapalido->qtdCapivaras; l++){
         if(CheckCollisionRecs(capivaras[l].retangulo, player->retangulo)){
             respawna(player,1,&saveatual);
+            saveatual->score = (saveatual->score)-100;
+
             }
 
     }
@@ -963,13 +1032,30 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
     for (int l = 0; l<mapalido->qtdAbelhas; l++){
         if(CheckCollisionRecs(abelhas[l].retangulo, player->ataque[0])){
             abelhas[l].retangulo.y=3000;
-            saveatual->score+= 100;
+            saveatual->score+= 50;
 
             }
 
     }
     for (int l = 0; l<mapalido->qtdCapivaras; l++){
         if(CheckCollisionRecs(capivaras[l].retangulo, player->ataque[0])){
+            capivaras[l].retangulo.y=3000;
+            saveatual->score+= 200;
+            }
+
+    }
+
+       //colisao poder com animais - animal morre
+    for (int l = 0; l<mapalido->qtdAbelhas; l++){
+        if(CheckCollisionRecs(abelhas[l].retangulo, player->ataque[1])){
+            abelhas[l].retangulo.y=3000;
+            saveatual->score+= 100;
+
+            }
+
+    }
+    for (int l = 0; l<mapalido->qtdCapivaras; l++){
+        if(CheckCollisionRecs(capivaras[l].retangulo, player->ataque[1])){
             capivaras[l].retangulo.y=3000;
             saveatual->score+= 200;
             }
@@ -988,11 +1074,10 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
 
     int main(){
             SetRandomSeed(time(NULL));
-            char nome_mapas[10][18];
+            char nome_mapas[18][18];
             init_nome_mapas(nome_mapas);
 
             Rectangle player_frame_rect = {0, 0, SPRITESIZE, SPRITESIZE};
-
 
             TEXTURAS texturas;
 
@@ -1016,6 +1101,7 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
                         saveatual.fase=0;
                         saveatual.score = 0;
                         saveatual.menustate = 1;
+                        saveatual.poderes = 5;
 
 
     //leMapa(nome_mapas[1], &mapas[1], &player);
@@ -1027,7 +1113,7 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
 //--------------------------------------------------------------------------------------
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(LARGURA, ALTURA, "Jogo Raylib  ");
+    InitWindow(LARGURA, ALTURA, "Capivara Destroyer");
 
 //----------------------------------------------------------------------------------
 //TEXTURAS
@@ -1039,8 +1125,6 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
         texturas.frame = LoadTexture("texturas/frame.png");
         texturas.trap = LoadTexture("texturas/trap.png");
         texturas.coin = LoadTexture("texturas/coin.png");
-        texturas.spriterunright = LoadTexture("texturas/spriterunright.png");
-        texturas.spriterunleft = LoadTexture("texturas/spriterunleft.png");
         texturas.coin_grande = LoadTexture("texturas/coingrande.png");
         texturas.heart= LoadTexture("texturas/heart.png");
         texturas.portal= LoadTexture("texturas/portal.png");
@@ -1059,6 +1143,10 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
         texturas.fallleft = LoadTexture("texturas/fallleft.png");
         texturas.ataqueright = LoadTexture("texturas/ataqueright.png");
         texturas.ataqueleft = LoadTexture("texturas/ataqueleft.png");
+        texturas.poder = LoadTexture("texturas/poder.png");
+        texturas.podersimbolo = LoadTexture("texturas/podersimbolo.png");
+
+
 
         //TEXTURAS TECLAS
         texturas.C = LoadTexture("texturas/C-Key.png");
@@ -1085,6 +1173,7 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
 
     while (!WindowShouldClose())
     {
+
 
             carrega_save(&save1,"save1.bin");
             carrega_save(&save2,"save2.bin");
@@ -1115,7 +1204,6 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
                 saveatual.trocarmapa = 0;
                 leMapa(nome_mapas[saveatual.fase], &mapas[saveatual.fase], &player);
                 inicializa_inimigos(&mapas[saveatual.fase],capivaras,abelhas);
-
                 respawna(&player,1,&saveatual);
             }
         if(Paused){
@@ -1145,9 +1233,9 @@ void movimentos_inimigos(MAPA *mapalido,ENTIDADE abelhas[],ENTIDADE capivaras[],
             checacolisoes(&mapas[saveatual.fase],&player,&saveatual);
 
             HUD(&mapas[saveatual.fase],&player,texturas,&saveatual);
-
-            movimentos_inimigos(&mapas[saveatual.fase],abelhas,capivaras,&player,&saveatual);
+            lanca_poder(&player,texturas,&saveatual);
             renderiza_inimigos(&mapas[saveatual.fase],capivaras,abelhas,&player,texturas);
+            movimentos_inimigos(&mapas[saveatual.fase],abelhas,capivaras,&player,&saveatual);
             movimento(&player);
             atualizaPlayer(&player);
             gravidade(&player);
