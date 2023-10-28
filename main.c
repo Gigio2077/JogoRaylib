@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "raylib.h"
 #include <time.h>
 #include <math.h>
 #include <string.h>
+
+#include "raylib.h"
+
 
 #define SPRITESIZE 32
 #define ALTURA 530
@@ -262,7 +264,10 @@ void GUI(TEXTURAS texturas,SAVE *saveatual,SAVE *save1,SAVE *save2,SAVE *save3,E
                 DrawTexture(texturas.V,358,305,WHITE);
                 DrawText("oltar",390,300,36,MAROON);
 
-                DrawText("aperte T para atacar e Esc para pausar",350,350,13,MAROON);
+                DrawText("Aperte Z para atacar, Esc para pausar ",350,350,13,MAROON);
+                DrawText("e ESPACO para jogar bola de fogo",350,365,13,MAROON);
+                DrawText("Mova-se com as setas do teclado",350,380,13,MAROON);
+
 
 
                 DrawTexture(texturas.Q,358,425,WHITE);
@@ -872,13 +877,6 @@ void lanca_poder(ENTIDADE *player, TEXTURAS texturas,SAVE *saveatual){
            player->ataque[1].y>530||player->ataque[1].x<0)
            {player->podervoando =!player->podervoando;}
 }
-
-
-
-
-
-
-
 
 void ataques(ENTIDADE *player, TEXTURAS texturas){
     player->framerec.width = 42;

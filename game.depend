@@ -6,11 +6,11 @@
 	<time.h>
 	<math.h>
 
-1680311074 source:c:\users\giova\onedrive\documentos\github\jogoraylib\main.c
+1680562895 source:c:\users\giova\onedrive\documentos\github\jogoraylib\main.c
 	<stdio.h>
 	<stdlib.h>
-	"raylib.h"
 	<time.h>
 	<math.h>
 	<string.h>
+	"raylib.h"
 
